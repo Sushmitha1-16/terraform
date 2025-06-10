@@ -1,35 +1,42 @@
+// Jenkinsfile
 pipeline {
-    agent any // Runs on any available agent; specify a label if necessary
-    tools {
-        terraform 'terraform' // Ensure Terraform is configured under "Manage Jenkins > Global Tool Configuration"
-    }
+    agent any
+
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'terraform-token', url: 'https://github.com/Sushmitha1-16/terraform.git'
+                echo "Checking out code from SCM..."
+                // When using "Pipeline script from SCM", Jenkins automatically checks out the code.
+                // You generally don't need a `git clone` step here unless you need a specific configuration.
             }
         }
-        stage('Terraform Init') {
+        stage('Build') {
             steps {
-                sh 'terraform init'
+                sh 'mvn clean install -DskipTests' // Example for a Maven project
             }
         }
-        stage('Terraform Plan') {
+        stage('Test') {
             steps {
-                sh 'terraform plan -out=tfplan'
+                sh 'mvn test' // Example for a Maven project
             }
         }
-        stage('Terraform Apply') {
+        stage('Package') {
             steps {
-                input message: 'Proceed with Terraform Apply?', ok: 'Apply'
-                sh 'terraform apply tfplan'
+                sh 'mvn package' // Example for a Maven project
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true // Archive build artifacts
             }
         }
-        stage('Verify File Creation') {
-            steps {
-                sh 'ls -l $WORKSPACE/pets.txt || echo "File not found!"'
-                sh 'cat $WORKSPACE/pets.txt || echo "No content!"'
-            }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution complete.'
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed. Check console output for errors.'
         }
     }
 }
