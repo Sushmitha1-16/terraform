@@ -1,10 +1,17 @@
-FROM node:18
+ # Base image
+FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
+
+# Copy project files
 COPY . .
 
-RUN npm install
-RUN npm run build
+# Install dependencies
+RUN npm install -g pm2 && npm install
 
+# Expose app port
 EXPOSE 3000
-CMD ["npm", "start"]
+
+# Start app using pm2
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]
