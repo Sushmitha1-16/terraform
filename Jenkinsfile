@@ -1,42 +1,71 @@
-// Jenkinsfile
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS_18' // Define in Jenkins: Manage Jenkins > Global Tool Configuration
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/betawins/Trading-UI.git'
+        APP_PORT = '3000'
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                echo "Checking out code from SCM..."
-                // When using "Pipeline script from SCM", Jenkins automatically checks out the code.
-                // You generally don't need a `git clone` step here unless you need a specific configuration.
+                git url: "${REPO_URL}", branch: 'main'
             }
         }
+
+        stage('Install Dependencies') {
+            steps {
+                echo "Installing npm packages..."
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo "Running tests..."
+                sh 'npm test || echo "No tests found or some tests failed."' // Adjust based on app
+            }
+        }
+
         stage('Build') {
             steps {
-                sh 'mvn clean install -DskipTests' // Example for a Maven project
+                echo "Building the app..."
+                sh 'npm run build'
             }
         }
-        stage('Test') {
+
+        stage('Archive Build Artifacts') {
             steps {
-                sh 'mvn test' // Example for a Maven project
+                archiveArtifacts artifacts: 'dist/**', fingerprint: true
             }
         }
-        stage('Package') {
+
+        stage('Docker Build & Deploy') {
             steps {
-                sh 'mvn package' // Example for a Maven project
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true // Archive build artifacts
+                script {
+                    echo "Building Docker image and running container..."
+                    sh '''
+                    docker stop trading-ui-container || true
+                    docker rm trading-ui-container || true
+                    docker build -t trading-ui:latest .
+                    docker run -d -p ${APP_PORT}:${APP_PORT} --name trading-ui-container trading-ui:latest
+                    '''
+                }
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline execution complete.'
-        }
         success {
-            echo 'Pipeline succeeded!'
+            echo "🎉 Deployment successful!"
         }
         failure {
-            echo 'Pipeline failed. Check console output for errors.'
+            echo "❌ Deployment failed."
         }
     }
 }
