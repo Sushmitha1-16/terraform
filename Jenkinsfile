@@ -18,12 +18,12 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                echo "Installing npm packages..."
-                sh 'npm install'
-            }
-        }
+        stage('Install npm prerequisites') {
+    steps {
+        sh 'npm audit fix || true'
+    }
+}
+
 
         stage('Run Tests') {
             steps {
