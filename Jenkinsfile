@@ -28,7 +28,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 echo "Running tests..."
-                sh 'npm test || echo "No tests found or some tests failed."' // Adjust based on app
+                sh 'npm test || echo "No tests found or some tests failed."'
             }
         }
 
@@ -68,10 +68,5 @@ pipeline {
             echo "❌ Deployment failed."
         }
     }
-    stage('Install npm prerequisites') {
-    steps {
-        sh 'npm install'
-    }
 }
 
-}
