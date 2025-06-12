@@ -68,4 +68,10 @@ pipeline {
             echo "❌ Deployment failed."
         }
     }
+    stage('Install npm prerequisites') {
+    steps {
+        sh 'npm install'
+    }
+}
+
 }
